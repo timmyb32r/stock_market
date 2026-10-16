@@ -1,0 +1,173 @@
+[
+  {
+    "ticker": "SBER",
+    "record_date": "2018-06-26",
+    "amount": 12,
+    "declared_on": "2018-04-17",
+    "last_buy_date": "2018-06-22",
+    "source": "https://smart-lab.ru/q/SBER/dividend/",
+    "announcement_source": "https://interfax.com/newsroom/top-stories/24141/"
+  },
+  {
+    "ticker": "SBER",
+    "record_date": "2021-05-12",
+    "amount": 18.7,
+    "declared_on": "2021-04-23",
+    "last_buy_date": "2021-05-10",
+    "source": "https://smart-lab.ru/q/SBER/dividend/",
+    "announcement_source": "https://www.interfax.ru/business/762910"
+  },
+  {
+    "ticker": "SBER",
+    "record_date": "2023-05-11",
+    "amount": 25,
+    "declared_on": "2023-03-17",
+    "last_buy_date": "2023-05-08",
+    "source": "https://smart-lab.ru/q/SBER/dividend/",
+    "announcement_source": "https://www.finam.ru/publications/item/aktsionery-sbera-prinyali-reshenie-po-dividendam-20230421-1208/"
+  },
+  {
+    "ticker": "SBER",
+    "record_date": "2024-07-11",
+    "amount": 33.3,
+    "declared_on": "2024-04-23",
+    "last_buy_date": "2024-07-10",
+    "source": "https://smart-lab.ru/q/SBER/dividend/",
+    "announcement_source": "https://www.dohod.ru/analytic/research/sberbank-dividendyi-2024"
+  },
+  {
+    "ticker": "SBER",
+    "record_date": "2025-07-18",
+    "amount": 34.84,
+    "declared_on": "2025-04-22",
+    "last_buy_date": "2025-07-17",
+    "source": "https://smart-lab.ru/q/SBER/dividend/",
+    "announcement_source": "https://www.aton.ru/ideas/sber_klyuchevye_rezultaty_za_pervyy_kvartal_2025_goda/"
+  },
+  {
+    "ticker": "SBER",
+    "record_date": "2026-07-20",
+    "amount": 37.64,
+    "declared_on": "2026-06-30",
+    "last_buy_date": "2026-07-17",
+    "source": "https://smart-lab.ru/q/SBER/dividend/",
+    "announcement_source": "https://www.interfax.ru/Quote/SBER/Dividends"
+  },
+  {
+    "ticker": "SBERP",
+    "record_date": "2018-06-26",
+    "amount": 12,
+    "declared_on": "2018-04-17",
+    "last_buy_date": "2018-06-22",
+    "source": "https://smart-lab.ru/q/SBER/dividend/",
+    "announcement_source": "https://interfax.com/newsroom/top-stories/24141/"
+  },
+  {
+    "ticker": "SBERP",
+    "record_date": "2021-05-12",
+    "amount": 18.7,
+    "declared_on": "2021-04-23",
+    "last_buy_date": "2021-05-10",
+    "source": "https://smart-lab.ru/q/SBER/dividend/",
+    "announcement_source": "https://www.interfax.ru/business/762910"
+  },
+  {
+    "ticker": "SBERP",
+    "record_date": "2023-05-11",
+    "amount": 25,
+    "declared_on": "2023-03-17",
+    "last_buy_date": "2023-05-08",
+    "source": "https://smart-lab.ru/q/SBER/dividend/",
+    "announcement_source": "https://www.finam.ru/publications/item/aktsionery-sbera-prinyali-reshenie-po-dividendam-20230421-1208/"
+  },
+  {
+    "ticker": "SBERP",
+    "record_date": "2024-07-11",
+    "amount": 33.3,
+    "declared_on": "2024-04-23",
+    "last_buy_date": "2024-07-10",
+    "source": "https://smart-lab.ru/q/SBER/dividend/",
+    "announcement_source": "https://www.dohod.ru/analytic/research/sberbank-dividendyi-2024"
+  },
+  {
+    "ticker": "SBERP",
+    "record_date": "2025-07-18",
+    "amount": 34.84,
+    "declared_on": "2025-04-22",
+    "last_buy_date": "2025-07-17",
+    "source": "https://smart-lab.ru/q/SBER/dividend/",
+    "announcement_source": "https://www.aton.ru/ideas/sber_klyuchevye_rezultaty_za_pervyy_kvartal_2025_goda/"
+  },
+  {
+    "ticker": "SBERP",
+    "record_date": "2026-07-20",
+    "amount": 37.64,
+    "declared_on": "2026-06-30",
+    "last_buy_date": "2026-07-17",
+    "source": "https://smart-lab.ru/q/SBER/dividend/",
+    "announcement_source": "https://www.interfax.ru/Quote/SBER/Dividends"
+  },
+  {
+    "ticker": "LKOH",
+    "record_date": "2021-07-05",
+    "amount": 213,
+    "declared_on": "2021-06-24",
+    "last_buy_date": null,
+    "source": "https://lukoil.ru/InvestorAndShareholderCenter/Securities/Dividends",
+    "announcement_source": "https://lukoil.ru/PressCenter/Pressreleases/Pressrelease/lukoil-provel-godovoe-obshchee-sobranie-aktsionerov"
+  },
+  {
+    "ticker": "LKOH",
+    "record_date": "2021-12-21",
+    "amount": 340,
+    "declared_on": "2021-10-13",
+    "last_buy_date": null,
+    "source": "https://lukoil.ru/InvestorAndShareholderCenter/Securities/Dividends",
+    "announcement_source": "https://lukoil.ru/api/presscenter/exportpressrelease?dl=1&id=562918"
+  },
+  {
+    "ticker": "LKOH",
+    "record_date": "2023-06-05",
+    "amount": 438,
+    "declared_on": "2023-04-24",
+    "last_buy_date": null,
+    "source": "https://lukoil.ru/InvestorAndShareholderCenter/Securities/Dividends",
+    "announcement_source": "https://monocle.ru/expert/2023/17/lukoyl-vzletel-na-novosti-o-dividendakh/"
+  },
+  {
+    "ticker": "LKOH",
+    "record_date": "2023-12-17",
+    "amount": 447,
+    "declared_on": "2023-10-26",
+    "last_buy_date": null,
+    "source": "https://lukoil.ru/InvestorAndShareholderCenter/Securities/Dividends",
+    "announcement_source": "https://lukoil.ru/PressCenter/Pressreleases/Pressrelease/sovet-direktorov-pao-lukoil-sozval-vneocherednoe_5"
+  },
+  {
+    "ticker": "LKOH",
+    "record_date": "2024-05-07",
+    "amount": 498,
+    "declared_on": "2024-04-26",
+    "last_buy_date": null,
+    "source": "https://lukoil.ru/InvestorAndShareholderCenter/Securities/Dividends",
+    "announcement_source": "https://lukoil.ru/api/presscenter/exportpressrelease?id=660269"
+  },
+  {
+    "ticker": "LKOH",
+    "record_date": "2024-12-17",
+    "amount": 514,
+    "declared_on": "2024-10-25",
+    "last_buy_date": null,
+    "source": "https://lukoil.ru/InvestorAndShareholderCenter/Securities/Dividends",
+    "announcement_source": "https://ru.investing.com/news/general/article-2546025"
+  },
+  {
+    "ticker": "LKOH",
+    "record_date": "2026-05-04",
+    "amount": 278,
+    "declared_on": "2026-04-24",
+    "last_buy_date": null,
+    "source": "https://lukoil.ru/InvestorAndShareholderCenter/Securities/Dividends",
+    "announcement_source": "https://lukoil.ru/api/presscenter/exportpressrelease?dl=1&id=728754"
+  }
+]

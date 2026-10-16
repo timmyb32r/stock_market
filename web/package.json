@@ -1,0 +1,14 @@
+{
+  "name": "market-lab-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": { "preact": "^10.26.4" },
+  "devDependencies": { "@preact/preset-vite": "^2.10.1", "@playwright/test": "^1.51.1", "typescript": "^5.8.2", "vite": "^6.2.2" }
+}
