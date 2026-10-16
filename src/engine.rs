@@ -370,6 +370,9 @@ fn best_ma(
 }
 
 pub fn calculate(data: &Dataset, id: u8, settings: &Settings, progress: impl Fn(String)) -> Report {
+    if id == 4 {
+        return crate::mozgovik::calculate(settings, progress);
+    }
     if id == 3 {
         return crate::dividend::calculate(data, settings, progress);
     }

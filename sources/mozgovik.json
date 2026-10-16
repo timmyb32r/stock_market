@@ -1,0 +1,454 @@
+{
+  "trades": [
+    {
+      "ticker": "MGNT",
+      "date_buy": "2023-08-25",
+      "price_buy": 5929.5,
+      "date_sell": "2023-11-16",
+      "price_sell": 5878.5,
+      "return_pct": -0.86
+    },
+    {
+      "ticker": "LKOH",
+      "date_buy": "2023-08-25",
+      "price_buy": 6552.5,
+      "date_sell": "2024-03-12",
+      "price_sell": 7540,
+      "return_pct": 15.07
+    },
+    {
+      "ticker": "SBER",
+      "date_buy": "2023-08-25",
+      "price_buy": 260.89,
+      "date_sell": "2024-06-11",
+      "price_sell": 317.27,
+      "return_pct": 21.61
+    },
+    {
+      "ticker": "SBERP",
+      "date_buy": "2023-12-11",
+      "price_buy": 256.69,
+      "date_sell": "2024-06-11",
+      "price_sell": 317.14,
+      "return_pct": 23.55
+    },
+    {
+      "ticker": "MRKP",
+      "date_buy": "2024-07-12",
+      "price_buy": 0.2862,
+      "date_sell": "2025-01-13",
+      "price_sell": 0.3545,
+      "return_pct": 23.86
+    },
+    {
+      "ticker": "TRNFP",
+      "date_buy": "2024-07-12",
+      "price_buy": 1444,
+      "date_sell": "2024-11-24",
+      "price_sell": 1071.5,
+      "return_pct": -25.8
+    },
+    {
+      "ticker": "T",
+      "date_buy": "2024-07-17",
+      "price_buy": 2637,
+      "date_sell": "2025-02-13",
+      "price_sell": 3327,
+      "return_pct": 26.17
+    },
+    {
+      "ticker": "LKOH",
+      "date_buy": "2024-09-02",
+      "price_buy": 6075.5,
+      "date_sell": "2024-09-23",
+      "price_sell": 6982.5,
+      "return_pct": 14.93
+    },
+    {
+      "ticker": "GEMC",
+      "date_buy": "2024-09-03",
+      "price_buy": 621.8,
+      "date_sell": "2024-12-26",
+      "price_sell": 714.9,
+      "return_pct": 14.97
+    },
+    {
+      "ticker": "LEAS",
+      "date_buy": "2024-09-03",
+      "price_buy": 625.3,
+      "date_sell": "2024-12-30",
+      "price_sell": 710.4,
+      "return_pct": 13.61
+    },
+    {
+      "ticker": "LENT",
+      "date_buy": "2024-09-03",
+      "price_buy": 951,
+      "date_sell": "2024-12-26",
+      "price_sell": 1141.5,
+      "return_pct": 20.03
+    },
+    {
+      "ticker": "MBNK",
+      "date_buy": "2024-09-03",
+      "price_buy": 1588,
+      "date_sell": "2024-10-03",
+      "price_sell": 1648,
+      "return_pct": 3.78
+    },
+    {
+      "ticker": "MGNT",
+      "date_buy": "2024-09-03",
+      "price_buy": 4574,
+      "date_sell": "2024-09-18",
+      "price_sell": 5618,
+      "return_pct": 22.82
+    },
+    {
+      "ticker": "NMTP",
+      "date_buy": "2024-09-03",
+      "price_buy": 7.945,
+      "date_sell": "2024-09-23",
+      "price_sell": 8.985,
+      "return_pct": 13.09
+    },
+    {
+      "ticker": "ROSN",
+      "date_buy": "2024-09-03",
+      "price_buy": 454.7,
+      "date_sell": "2024-09-23",
+      "price_sell": 524.25,
+      "return_pct": 15.3
+    },
+    {
+      "ticker": "SBER",
+      "date_buy": "2024-09-03",
+      "price_buy": 244.34,
+      "date_sell": "2024-12-26",
+      "price_sell": 271.71,
+      "return_pct": 11.2
+    },
+    {
+      "ticker": "SVCB",
+      "date_buy": "2024-09-03",
+      "price_buy": 12.7,
+      "date_sell": "2025-02-13",
+      "price_sell": 16.495,
+      "return_pct": 29.88
+    },
+    {
+      "ticker": "HEAD",
+      "date_buy": "2024-09-26",
+      "price_buy": 4016,
+      "date_sell": "2024-10-07",
+      "price_sell": 4180,
+      "return_pct": 4.08
+    },
+    {
+      "ticker": "SBERP",
+      "date_buy": "2024-10-06",
+      "price_buy": 263.7,
+      "date_sell": "2024-12-26",
+      "price_sell": 270.36,
+      "return_pct": 2.53
+    },
+    {
+      "ticker": "ROSN",
+      "date_buy": "2024-10-29",
+      "price_buy": 436.85,
+      "date_sell": "2024-12-20",
+      "price_sell": 563.05,
+      "return_pct": 28.89
+    },
+    {
+      "ticker": "SIBN",
+      "date_buy": "2024-11-21",
+      "price_buy": 531.6,
+      "date_sell": "2025-01-10",
+      "price_sell": 579.2,
+      "return_pct": 8.95
+    },
+    {
+      "ticker": "YDEX",
+      "date_buy": "2024-11-21",
+      "price_buy": 3420.5,
+      "date_sell": "2025-02-11",
+      "price_sell": 4246,
+      "return_pct": 24.13
+    },
+    {
+      "ticker": "MGNT",
+      "date_buy": "2024-11-26",
+      "price_buy": 4088,
+      "date_sell": "2024-12-29",
+      "price_sell": 5008,
+      "return_pct": 22.5
+    },
+    {
+      "ticker": "OZPH",
+      "date_buy": "2024-12-05",
+      "price_buy": 30.72,
+      "date_sell": "2024-12-30",
+      "price_sell": 41.47,
+      "return_pct": 34.99
+    },
+    {
+      "ticker": "DIAS",
+      "date_buy": "2024-12-11",
+      "price_buy": 3711,
+      "date_sell": "2025-01-30",
+      "price_sell": 4520.5,
+      "return_pct": 21.81
+    },
+    {
+      "ticker": "ELFV",
+      "date_buy": "2025-04-03",
+      "price_buy": 0.481,
+      "date_sell": "2025-06-20",
+      "price_sell": 0.5012,
+      "return_pct": 4.2
+    },
+    {
+      "ticker": "MDMG",
+      "date_buy": "2025-04-07",
+      "price_buy": 994,
+      "date_sell": "2025-08-04",
+      "price_sell": 1131.4,
+      "return_pct": 13.82
+    },
+    {
+      "ticker": "RTKM",
+      "date_buy": "2025-04-07",
+      "price_buy": 56.85,
+      "date_sell": "2025-04-13",
+      "price_sell": 59.24,
+      "return_pct": 4.2
+    },
+    {
+      "ticker": "RTKMP",
+      "date_buy": "2025-04-07",
+      "price_buy": 51.3,
+      "date_sell": "2025-04-13",
+      "price_sell": 54.85,
+      "return_pct": 6.92
+    },
+    {
+      "ticker": "DIAS",
+      "date_buy": "2025-04-18",
+      "price_buy": 3419.5,
+      "date_sell": "2025-07-03",
+      "price_sell": 2924.5,
+      "return_pct": -14.48
+    },
+    {
+      "ticker": "MRKZ",
+      "date_buy": "2025-05-13",
+      "price_buy": 0.069,
+      "date_sell": "2025-05-16",
+      "price_sell": 0.0683,
+      "return_pct": -1.01
+    },
+    {
+      "ticker": "GEMC",
+      "date_buy": "2025-06-02",
+      "price_buy": 680.1,
+      "date_sell": "2025-11-01",
+      "price_sell": 755.2,
+      "return_pct": 11.04
+    },
+    {
+      "ticker": "TRNFP",
+      "date_buy": "2025-09-22",
+      "price_buy": 1239.6,
+      "date_sell": "2026-03-01",
+      "price_sell": 1427.2,
+      "return_pct": 15.13
+    },
+    {
+      "ticker": "SNGSP",
+      "date_buy": "2025-09-29",
+      "price_buy": 39.8,
+      "date_sell": "2026-03-17",
+      "price_sell": 48,
+      "return_pct": 20.6
+    },
+    {
+      "ticker": "VSEH",
+      "date_buy": "2025-10-11",
+      "price_buy": 61.75,
+      "date_sell": "2025-11-20",
+      "price_sell": 67.35,
+      "return_pct": 9.07
+    },
+    {
+      "ticker": "VTBR",
+      "date_buy": "2025-12-19",
+      "price_buy": 74.15,
+      "date_sell": "2026-02-24",
+      "price_sell": 88.06,
+      "return_pct": 18.76
+    },
+    {
+      "ticker": "VTBR",
+      "date_buy": "2026-02-26",
+      "price_buy": 87.975,
+      "date_sell": "2026-05-27",
+      "price_sell": 80.215,
+      "return_pct": -8.82
+    },
+    {
+      "ticker": "BTBR",
+      "date_buy": "2026-04-17",
+      "price_buy": 126,
+      "date_sell": "2026-05-25",
+      "price_sell": 133.21,
+      "return_pct": 5.72
+    }
+  ],
+  "rates": [
+    [
+      "2020-07-02",
+      4.5
+    ],
+    [
+      "2021-03-21",
+      4.25
+    ],
+    [
+      "2021-04-21",
+      4.5
+    ],
+    [
+      "2021-05-26",
+      5.0
+    ],
+    [
+      "2021-06-16",
+      5.5
+    ],
+    [
+      "2021-07-25",
+      6.5
+    ],
+    [
+      "2021-09-12",
+      6.75
+    ],
+    [
+      "2021-10-22",
+      7.5
+    ],
+    [
+      "2022-02-14",
+      9.5
+    ],
+    [
+      "2022-02-25",
+      20.0
+    ],
+    [
+      "2022-04-08",
+      17.0
+    ],
+    [
+      "2022-04-28",
+      14.0
+    ],
+    [
+      "2022-05-20",
+      11.0
+    ],
+    [
+      "2022-06-09",
+      9.5
+    ],
+    [
+      "2022-07-21",
+      8.0
+    ],
+    [
+      "2022-09-16",
+      7.5
+    ],
+    [
+      "2023-07-24",
+      8.5
+    ],
+    [
+      "2023-08-14",
+      12.0
+    ],
+    [
+      "2023-09-15",
+      13.0
+    ],
+    [
+      "2023-10-27",
+      15.0
+    ],
+    [
+      "2023-12-15",
+      16.0
+    ],
+    [
+      "2024-07-26",
+      18.0
+    ],
+    [
+      "2024-09-13",
+      19.0
+    ],
+    [
+      "2024-10-25",
+      21.0
+    ],
+    [
+      "2025-03-20",
+      20.0
+    ],
+    [
+      "2025-05-02",
+      21.0
+    ],
+    [
+      "2025-06-06",
+      18.0
+    ],
+    [
+      "2025-07-11",
+      17.0
+    ],
+    [
+      "2025-08-22",
+      18.0
+    ],
+    [
+      "2025-09-12",
+      16.5
+    ],
+    [
+      "2025-10-24",
+      16.0
+    ],
+    [
+      "2026-02-13",
+      15.5
+    ],
+    [
+      "2026-03-20",
+      15.0
+    ],
+    [
+      "2026-04-24",
+      14.5
+    ],
+    [
+      "2026-06-05",
+      14.25
+    ],
+    [
+      "2026-06-22",
+      14.25
+    ]
+  ]
+}

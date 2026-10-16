@@ -31,6 +31,15 @@ pub fn enrich(report: &mut Report, data: &Dataset) {
         let Some(start) = run.start else {
             continue;
         };
+        if report.id == 4 {
+            if let Some(index) = data.instruments.get("IMOEX") {
+                if let Some(base) = baseline(index, start) {
+                    for point in &mut run.points {
+                        point.benchmark = value(index, point.date).map(|v| run.initial * v / base);
+                    }
+                }
+            }
+        }
         for (ticker, total) in [("MCFTR", true), ("LQDT", false)] {
             let series = data.instruments.get(ticker);
             let base = series.and_then(|s| baseline(s, start));

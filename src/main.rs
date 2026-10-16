@@ -4,6 +4,7 @@ mod dividend;
 mod engine;
 mod ma;
 mod model;
+mod mozgovik;
 
 use axum::{
     extract::{DefaultBodyLimit, Path, State},
@@ -171,7 +172,7 @@ async fn perform(
             data::save(&app.dir.join("market.json"), &data)?;
             app.inner.lock().unwrap().dataset = data;
         }
-        for id in only.map(|id| vec![id]).unwrap_or(vec![1, 2, 3]) {
+        for id in only.map(|id| vec![id]).unwrap_or(vec![1, 2, 3, 4]) {
             let s = settings.clone().unwrap_or_else(|| {
                 app.inner
                     .lock()
@@ -218,7 +219,7 @@ async fn recalculate(
     Path(id): Path<u8>,
     Json(settings): Json<Settings>,
 ) -> ApiResult<serde_json::Value> {
-    if !(1..=3).contains(&id) {
+    if !(1..=4).contains(&id) {
         return Err(error(StatusCode::NOT_FOUND, "Нет такой стратегии"));
     }
     settings
@@ -277,7 +278,7 @@ async fn main() -> anyhow::Result<()> {
     std::fs::create_dir_all(&dir)?;
     let mut dataset: Dataset = data::read(&dir.join("market.json")).unwrap_or_default();
     dataset.validate(data::today())?;
-    let reports = (1..=3)
+    let reports = (1..=4)
         .filter_map(|i| {
             data::read(&dir.join(format!("strategy-{i}.json"))).map(|mut r: Report| {
                 r.runs.retain(|run| run.label == "Исторический оптимум");
@@ -340,6 +341,15 @@ async fn main() -> anyhow::Result<()> {
     let api = Router::new()
         .route("/state", get(state))
         .route("/sources", get(sources))
+        .route(
+            "/strategies/4/source",
+            get(|| async {
+                (
+                    [(header::CONTENT_TYPE, "application/json; charset=utf-8")],
+                    mozgovik::SOURCE_JSON,
+                )
+            }),
+        )
         .route("/export", get(export))
         .route("/refresh", post(refresh))
         .route("/strategies/{id}/recalculate", post(recalculate))

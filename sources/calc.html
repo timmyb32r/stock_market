@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mozgovik Rating Strategy Backtest</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js">
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#f5f5f5;color:#222;padding:20px}
+h1{font-size:20px;margin-bottom:4px}
+.subtitle{color:#666;font-size:13px;margin-bottom:20px}
+.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:end;margin-bottom:20px;background:#fff;padding:16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.control-group{display:flex;flex-direction:column;gap:4px}
+.control-group label{font-size:12px;font-weight:600;color:#555;text-transform:uppercase}
+.control-group input{padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:15px;width:160px}
+.control-group input:focus{outline:none;border-color:#4a90d9;box-shadow:0 0 0 2px rgba(74,144,217,.2)}
+button{padding:10px 20px;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-primary{background:#4a90d9;color:#fff}
+.btn-primary:hover{background:#3a7bc8}
+.btn-sweep{background:#e8f0fe;color:#4a90d9;border:2px solid #4a90d9}
+.btn-sweep:hover{background:#d0e2fc}
+.btn-sweep:disabled{opacity:.5;cursor:not-allowed}
+.btn-clear{background:#fee;color:#c33;border:2px solid #c33}
+.btn-clear:hover{background:#fdd}
+.stats{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.stat-card{background:#fff;padding:14px 18px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.1);min-width:140px}
+.stat-card .label{font-size:11px;color:#888;text-transform:uppercase;font-weight:600}
+.stat-card .value{font-size:22px;font-weight:700;margin-top:2px}
+.stat-card .value.positive{color:#0a0}
+.stat-card .value.negative{color:#c00}
+.section-title{font-size:15px;font-weight:700;margin:20px 0 10px;color:#333}
+.chart-container{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.1);padding:16px;margin-bottom:20px;position:relative}
+.chart-container canvas{width:100%;height:450px}
+.table-container{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.1);overflow-x:auto;margin-bottom:20px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f8f9fa;padding:10px 12px;text-align:left;font-weight:600;color:#555;border-bottom:2px solid #dee2e6;white-space:nowrap;position:sticky;top:0}
+td{padding:8px 12px;border-bottom:1px solid #eee}
+tr:hover td{background:#f8f9ff}
+.sep-left{border-left:2px solid #dee2e6}
+.sep-left-header{border-left:2px solid #bbb}
+.return-positive{color:#0a0;font-weight:600}
+.return-negative{color:#c00;font-weight:600}
+.skipped td{background:#fff3f3;color:#999}
+.skipped:hover td{background:#ffe8e8}
+.sweep-summary{margin-top:12px;font-size:13px;color:#666}
+.sweep-summary table{margin-top:8px}
+.sweep-summary td,.sweep-summary th{padding:6px 10px;font-size:12px}
+.best-row td{background:#e6ffe6;font-weight:600}
+#loading{display:none;text-align:center;padding:20px;color:#888}
+#loading.visible{display:block}
+.trade-pnl{font-size:11px;color:#888}
+.date-range-bar{background:#fff;padding:10px 18px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.1);font-size:13px;color:#555;display:flex;gap:24px;flex-wrap:wrap;width:100%}
+.date-range-bar span{font-weight:600;color:#222}
+.sort-header{cursor:pointer;user-select:none;position:relative;padding-right:20px!important}
+.sort-header:hover{background:#e8ecf1}
+.sort-arrow{position:absolute;right:4px;font-size:10px;opacity:.4}
+.sort-arrow.active{opacity:1}
+.sort-header.asc .sort-arrow,.sort-header.desc .sort-arrow{opacity:1}
+</style>
+</head>
+<body>
+
+<h1>📊 Mozgovik Rating Strategy Backtest</h1>
+<p class="subtitle">38 совершённых сделок на основе торговых сигналов рейтинга Mozgovik (2023–2026)</p>
+
+<div class="controls">
+  <div class="control-group">
+    <label>Начальный капитал, ₽</label>
+    <input type="number" id="initialCapital" value="1000000" min="10000" step="10000" onchange="recalc()">
+  </div>
+  <div class="control-group">
+    <label>Макс. одновременных позиций (N)</label>
+    <input type="number" id="maxPositions" value="5" min="1" max="14" step="1" onchange="recalc()">
+  </div>
+  <button class="btn-sweep" id="btnSweep" onclick="runSweep()">📈 Сгенерировать N=1..14</button>
+  <button class="btn-clear" id="btnClear" onclick="clearSweep()" style="display:none">✕ Очистить</button>
+  <button class="btn-primary" onclick="recalc()">🔄 Пересчитать</button>
+</div>
+
+<div id="loading">⏳ Считаю 14 вариантов...</div>
+
+<div class="stats" id="stats"></div>
+
+<div class="chart-container">
+  <canvas id="mainChart"></canvas>
+</div>
+
+<div class="section-title">📋 Все сделки</div>
+<div class="table-container" id="tradeTable"></div>
+
+<div id="sweepSummary" class="sweep-summary"></div>
+
+<div class="chart-container" id="sweepChartContainer" style="display:none">
+  <canvas id="sweepChart"></canvas>
+</div>
+
+<script>
+// ============================================================
+// EMBEDDED DATA
+// ============================================================
+
+const TRADES = [
+  {ticker:"MGNT",date_buy:"2023-08-25",price_buy:5929.5,date_sell:"2023-11-16",price_sell:5878.5,return_pct:-0.86},
+  {ticker:"LKOH",date_buy:"2023-08-25",price_buy:6552.5,date_sell:"2024-03-12",price_sell:7540,return_pct:15.07},
+  {ticker:"SBER",date_buy:"2023-08-25",price_buy:260.89,date_sell:"2024-06-11",price_sell:317.27,return_pct:21.61},
+  {ticker:"SBERP",date_buy:"2023-12-11",price_buy:256.69,date_sell:"2024-06-11",price_sell:317.14,return_pct:23.55},
+  {ticker:"MRKP",date_buy:"2024-07-12",price_buy:0.2862,date_sell:"2025-01-13",price_sell:0.3545,return_pct:23.86},
+  {ticker:"TRNFP",date_buy:"2024-07-12",price_buy:1444,date_sell:"2024-11-24",price_sell:1071.5,return_pct:-25.80},
+  {ticker:"T",date_buy:"2024-07-17",price_buy:2637,date_sell:"2025-02-13",price_sell:3327,return_pct:26.17},
+  {ticker:"LKOH",date_buy:"2024-09-02",price_buy:6075.5,date_sell:"2024-09-23",price_sell:6982.5,return_pct:14.93},
+  {ticker:"GEMC",date_buy:"2024-09-03",price_buy:621.8,date_sell:"2024-12-26",price_sell:714.9,return_pct:14.97},
+  {ticker:"LEAS",date_buy:"2024-09-03",price_buy:625.3,date_sell:"2024-12-30",price_sell:710.4,return_pct:13.61},
+  {ticker:"LENT",date_buy:"2024-09-03",price_buy:951,date_sell:"2024-12-26",price_sell:1141.5,return_pct:20.03},
+  {ticker:"MBNK",date_buy:"2024-09-03",price_buy:1588,date_sell:"2024-10-03",price_sell:1648,return_pct:3.78},
+  {ticker:"MGNT",date_buy:"2024-09-03",price_buy:4574,date_sell:"2024-09-18",price_sell:5618,return_pct:22.82},
+  {ticker:"NMTP",date_buy:"2024-09-03",price_buy:7.945,date_sell:"2024-09-23",price_sell:8.985,return_pct:13.09},
+  {ticker:"ROSN",date_buy:"2024-09-03",price_buy:454.7,date_sell:"2024-09-23",price_sell:524.25,return_pct:15.30},
+  {ticker:"SBER",date_buy:"2024-09-03",price_buy:244.34,date_sell:"2024-12-26",price_sell:271.71,return_pct:11.20},
+  {ticker:"SVCB",date_buy:"2024-09-03",price_buy:12.7,date_sell:"2025-02-13",price_sell:16.495,return_pct:29.88},
+  {ticker:"HEAD",date_buy:"2024-09-26",price_buy:4016,date_sell:"2024-10-07",price_sell:4180,return_pct:4.08},
+  {ticker:"SBERP",date_buy:"2024-10-06",price_buy:263.7,date_sell:"2024-12-26",price_sell:270.36,return_pct:2.53},
+  {ticker:"ROSN",date_buy:"2024-10-29",price_buy:436.85,date_sell:"2024-12-20",price_sell:563.05,return_pct:28.89},
+  {ticker:"SIBN",date_buy:"2024-11-21",price_buy:531.6,date_sell:"2025-01-10",price_sell:579.2,return_pct:8.95},
+  {ticker:"YDEX",date_buy:"2024-11-21",price_buy:3420.5,date_sell:"2025-02-11",price_sell:4246,return_pct:24.13},
+  {ticker:"MGNT",date_buy:"2024-11-26",price_buy:4088,date_sell:"2024-12-29",price_sell:5008,return_pct:22.50},
+  {ticker:"OZPH",date_buy:"2024-12-05",price_buy:30.72,date_sell:"2024-12-30",price_sell:41.47,return_pct:34.99},
+  {ticker:"DIAS",date_buy:"2024-12-11",price_buy:3711,date_sell:"2025-01-30",price_sell:4520.5,return_pct:21.81},
+  {ticker:"ELFV",date_buy:"2025-04-03",price_buy:0.481,date_sell:"2025-06-20",price_sell:0.5012,return_pct:4.20},
+  {ticker:"MDMG",date_buy:"2025-04-07",price_buy:994,date_sell:"2025-08-04",price_sell:1131.4,return_pct:13.82},
+  {ticker:"RTKM",date_buy:"2025-04-07",price_buy:56.85,date_sell:"2025-04-13",price_sell:59.24,return_pct:4.20},
+  {ticker:"RTKMP",date_buy:"2025-04-07",price_buy:51.3,date_sell:"2025-04-13",price_sell:54.85,return_pct:6.92},
+  {ticker:"DIAS",date_buy:"2025-04-18",price_buy:3419.5,date_sell:"2025-07-03",price_sell:2924.5,return_pct:-14.48},
+  {ticker:"MRKZ",date_buy:"2025-05-13",price_buy:0.069,date_sell:"2025-05-16",price_sell:0.0683,return_pct:-1.01},
+  {ticker:"GEMC",date_buy:"2025-06-02",price_buy:680.1,date_sell:"2025-11-01",price_sell:755.2,return_pct:11.04},
+  {ticker:"TRNFP",date_buy:"2025-09-22",price_buy:1239.6,date_sell:"2026-03-01",price_sell:1427.2,return_pct:15.13},
+  {ticker:"SNGSP",date_buy:"2025-09-29",price_buy:39.8,date_sell:"2026-03-17",price_sell:48,return_pct:20.60},
+  {ticker:"VSEH",date_buy:"2025-10-11",price_buy:61.75,date_sell:"2025-11-20",price_sell:67.35,return_pct:9.07},
+  {ticker:"VTBR",date_buy:"2025-12-19",price_buy:74.15,date_sell:"2026-02-24",price_sell:88.06,return_pct:18.76},
+  {ticker:"VTBR",date_buy:"2026-02-26",price_buy:87.975,date_sell:"2026-05-27",price_sell:80.215,return_pct:-8.82},
+  {ticker:"BTBR",date_buy:"2026-04-17",price_buy:126,date_sell:"2026-05-25",price_sell:133.21,return_pct:5.72}
+];
+
+// Key rate change dates [date, annual_rate_pct]
+const KEY_RATES = [
+  ["2020-07-02",4.5],["2021-03-21",4.25],["2021-04-21",4.5],["2021-05-26",5.0],
+  ["2021-06-16",5.5],["2021-07-25",6.5],["2021-09-12",6.75],["2021-10-22",7.5],
+  ["2022-02-14",9.5],["2022-02-25",20.0],["2022-04-08",17.0],["2022-04-28",14.0],
+  ["2022-05-20",11.0],["2022-06-09",9.5],["2022-07-21",8.0],["2022-09-16",7.5],
+  ["2023-07-24",8.5],["2023-08-14",12.0],["2023-09-15",13.0],["2023-10-27",15.0],
+  ["2023-12-15",16.0],["2024-07-26",18.0],["2024-09-13",19.0],["2024-10-25",21.0],
+  ["2025-03-20",20.0],["2025-05-02",21.0],["2025-06-06",18.0],["2025-07-11",17.0],
+  ["2025-08-22",18.0],["2025-09-12",16.5],["2025-10-24",16.0],["2026-02-13",15.5],
+  ["2026-03-20",15.0],["2026-04-24",14.5],["2026-06-05",14.25],["2026-06-22",14.25]
+];
+
+// IRUS (MCFTR) data [date, close]
+const IRUS_DATA = [["2023-08-25",6990.76],["2023-08-28",7052.02],["2023-08-29",7082.74],["2023-08-30",7084.66],["2023-08-31",7091.57],["2023-09-01",7107.77],["2023-09-04",7160.47],["2023-09-05",7180.8],["2023-09-06",7251.77],["2023-09-07",7167.22],["2023-09-08",7166.11],["2023-09-11",7148.96],["2023-09-12",7138.52],["2023-09-13",7082.14],["2023-09-14",7077.2],["2023-09-15",7071.46],["2023-09-18",7050.36],["2023-09-19",7058.76],["2023-09-20",7089.0],["2023-09-21",7091.19],["2023-09-22",7099.83],["2023-09-25",7125.72],["2023-09-26",7142.92],["2023-09-27",7174.79],["2023-09-28",7176.41],["2023-09-29",7144.54],["2023-10-02",7153.31],["2023-10-03",7144.98],["2023-10-04",7185.31],["2023-10-05",7249.08],["2023-10-06",7241.24],["2023-10-09",7262.53],["2023-10-10",7308.21],["2023-10-11",7395.93],["2023-10-12",7442.8],["2023-10-13",7438.06],["2023-10-16",7459.09],["2023-10-17",7514.46],["2023-10-18",7513.49],["2023-10-19",7506.57],["2023-10-20",7467.56],["2023-10-23",7382.34],["2023-10-24",7382.68],["2023-10-25",7393.1],["2023-10-26",7356.5],["2023-10-27",7403.56],["2023-10-30",7423.08],["2023-10-31",7427.41],["2023-11-01",7462.16],["2023-11-02",7515.42],["2023-11-03",7514.86],["2023-11-07",7500.88],["2023-11-08",7463.33],["2023-11-09",7425.84],["2023-11-10",7453.43],["2023-11-13",7447.87],["2023-11-14",7520.19],["2023-11-15",7552.42],["2023-11-16",7538.43],["2023-11-17",7551.46],["2023-11-20",7547.99],["2023-11-21",7540.4],["2023-11-22",7558.72],["2023-11-23",7547.91],["2023-11-24",7519.79],["2023-11-27",7515.16],["2023-11-28",7524.93],["2023-11-29",7516.14],["2023-11-30",7471.42],["2023-12-01",7472.98],["2023-12-04",7412.45],["2023-12-05",7378.59],["2023-12-06",7317.66],["2023-12-07",7311.41],["2023-12-08",7305.07],["2023-12-11",7314.51],["2023-12-12",7315.69],["2023-12-13",7344.88],["2023-12-14",7388.67],["2023-12-15",7363.86],["2023-12-18",7352.92],["2023-12-19",7320.14],["2023-12-20",7337.4],["2023-12-21",7316.51],["2023-12-22",7315.65],["2023-12-25",7322.18],["2023-12-26",7334.72],["2023-12-27",7344.87],["2023-12-28",7335.93],["2023-12-29",7322.85],["2024-01-02",7322.85],["2024-01-03",7292.9],["2024-01-04",7275.72],["2024-01-05",7298.47],["2024-01-08",7297.23],["2024-01-09",7295.12],["2024-01-10",7281.28],["2024-01-11",7282.03],["2024-01-12",7261.67],["2024-01-15",7235.76],["2024-01-16",7238.6],["2024-01-17",7204.42],["2024-01-18",7198.27],["2024-01-19",7156.53],["2024-01-22",7135.27],["2024-01-23",7117.27],["2024-01-24",7110.54],["2024-01-25",7127.54],["2024-01-26",7143.35],["2024-01-29",7179.34],["2024-01-30",7168.39],["2024-01-31",7235.24],["2024-02-01",7233.55],["2024-02-02",7237.53],["2024-02-05",7287.22],["2024-02-06",7303.97],["2024-02-07",7328.17],["2024-02-08",7333.66],["2024-02-09",7319.88],["2024-02-12",7339.09],["2024-02-13",7337.8],["2024-02-14",7311.76],["2024-02-15",7305.17],["2024-02-16",7307.93],["2024-02-19",7319.52],["2024-02-20",7281.82],["2024-02-21",7252.92],["2024-02-22",7241.87],["2024-02-26",7257.55],["2024-02-27",7284.58],["2024-02-28",7310.94],["2024-02-29",7341.97],["2024-03-01",7358.64],["2024-03-04",7409.4],["2024-03-05",7436.26],["2024-03-06",7443.48],["2024-03-07",7452.07],["2024-03-11",7435.35],["2024-03-12",7339.74],["2024-03-13",7336.8],["2024-03-14",7369.68],["2024-03-15",7359.46],["2024-03-18",7401.08],["2024-03-19",7397.02],["2024-03-20",7416.18],["2024-03-21",7407.54],["2024-03-22",7426.45],["2024-03-25",7479.94],["2024-03-26",7487.21],["2024-03-27",7528.86],["2024-03-28",7551.16],["2024-03-29",7570.39],["2024-04-01",7644.73],["2024-04-02",7640.63],["2024-04-03",7615.74],["2024-04-04",7580.11],["2024-04-05",7569.04],["2024-04-08",7572.83],["2024-04-09",7643.9],["2024-04-10",7626.45],["2024-04-11",7592.26],["2024-04-12",7605.4],["2024-04-15",7622.49],["2024-04-16",7645.11],["2024-04-17",7636.47],["2024-04-18",7630.9],["2024-04-19",7629.6],["2024-04-22",7687.67],["2024-04-23",7672.07],["2024-04-24",7684.36],["2024-04-25",7663.07],["2024-04-26",7661.44],["2024-04-29",7666.04],["2024-04-30",7666.04],["2024-05-02",7676.45],["2024-05-03",7661.55],["2024-05-06",7671.74],["2024-05-07",7688.93],["2024-05-08",7660.01],["2024-05-10",7676.31],["2024-05-13",7697.17],["2024-05-14",7695.57],["2024-05-15",7678.24],["2024-05-16",7650.69],["2024-05-17",7658.81],["2024-05-20",7660.29],["2024-05-21",7643.42],["2024-05-22",7609.07],["2024-05-23",7572.77],["2024-05-24",7541.54],["2024-05-27",7477.6],["2024-05-28",7433.65],["2024-05-29",7398.39],["2024-05-30",7365.8],["2024-05-31",7303.31],["2024-06-03",7303.65],["2024-06-04",7417.34],["2024-06-05",7479.63],["2024-06-06",7501.01],["2024-06-07",7541.22],["2024-06-10",7520.76],["2024-06-11",7458.29],["2024-06-13",7269.6],["2024-06-14",7327.96],["2024-06-17",7314.83],["2024-06-18",7280.35],["2024-06-19",7166.33],["2024-06-20",7124.83],["2024-06-21",7194.63],["2024-06-24",7157.44],["2024-06-25",7114.73],["2024-06-26",7077.58],["2024-06-27",7126.03],["2024-06-28",7071.65],["2024-07-01",7089.29],["2024-07-02",7052.38],["2024-07-03",7099.63],["2024-07-04",7128.88],["2024-07-05",7150.45],["2024-07-08",7130.01],["2024-07-09",7065.48],["2024-07-10",6948.94],["2024-07-11",6899.38],["2024-07-12",6879.6],["2024-07-15",6841.2],["2024-07-16",6840.41],["2024-07-17",6923.62],["2024-07-18",6967.87],["2024-07-19",6960.1],["2024-07-22",6957.4],["2024-07-23",6964.81],["2024-07-24",6818.24],["2024-07-25",6757.62],["2024-07-26",6677.68],["2024-07-29",6618.89],["2024-07-30",6584.17],["2024-07-31",6594.45],["2024-08-01",6503.57],["2024-08-02",6501.86],["2024-08-05",6489.59],["2024-08-06",6429.6],["2024-08-07",6429.85],["2024-08-08",6443.58],["2024-08-09",6394.32],["2024-08-12",6418.38],["2024-08-13",6396.56],["2024-08-14",6317.85],["2024-08-15",6316.47],["2024-08-16",6341.16],["2024-08-19",6324.86],["2024-08-20",6282.26],["2024-08-21",6319.53],["2024-08-22",6250.53],["2024-08-23",6260.13],["2024-08-26",6223.87],["2024-08-27",6158.65],["2024-08-28",6178.44],["2024-08-29",6133.34],["2024-08-30",6102.63],["2024-09-02",6095.0],["2024-09-03",6010.38],["2024-09-04",5976.14],["2024-09-05",5887.59],["2024-09-06",5893.14],["2024-09-09",5896.28],["2024-09-10",5938.0],["2024-09-11",5964.92],["2024-09-12",5974.39],["2024-09-13",5977.93],["2024-09-16",5967.15],["2024-09-17",5927.62],["2024-09-18",5954.2],["2024-09-19",5960.32],["2024-09-20",5954.37],["2024-09-23",5946.29],["2024-09-24",5953.66],["2024-09-25",5961.37],["2024-09-26",5997.04],["2024-09-27",6016.0],["2024-09-30",6004.84],["2024-10-01",5996.6],["2024-10-02",5940.58],["2024-10-03",5886.4],["2024-10-04",5880.17],["2024-10-07",5848.77],["2024-10-08",5841.6],["2024-10-09",5830.23],["2024-10-10",5832.01],["2024-10-11",5807.95],["2024-10-14",5798.06],["2024-10-15",5765.52],["2024-10-16",5753.82],["2024-10-17",5783.92],["2024-10-18",5756.75],["2024-10-21",5683.68],["2024-10-22",5688.96],["2024-10-23",5685.19],["2024-10-24",5696.91],["2024-10-25",5704.56],["2024-10-28",5728.58],["2024-10-29",5740.06],["2024-10-30",5764.64],["2024-10-31",5785.84],["2024-11-01",5816.27],["2024-11-02",5816.27],["2024-11-05",5832.22],["2024-11-06",5808.99],["2024-11-07",5780.01],["2024-11-08",5763.18],["2024-11-11",5782.54],["2024-11-12",5813.6],["2024-11-13",5817.25],["2024-11-14",5937.97],["2024-11-15",5945.38],["2024-11-18",5944.86],["2024-11-19",5941.48],["2024-11-20",5921.87],["2024-11-21",5935.42],["2024-11-22",5897.54],["2024-11-25",5887.83],["2024-11-26",5856.15],["2024-11-27",5837.06],["2024-11-28",5839.28],["2024-11-29",5783.25],["2024-12-02",5736.91],["2024-12-03",5681.74],["2024-12-04",5665.6],["2024-12-05",5746.84],["2024-12-06",5713.79],["2024-12-09",5683.43],["2024-12-10",5652.98],["2024-12-11",5651.41],["2024-12-12",5626.99],["2024-12-13",5633.94],["2024-12-16",5635.82],["2024-12-17",5608.23],["2024-12-18",5590.24],["2024-12-19",5572.0],["2024-12-20",5671.12],["2024-12-23",5725.69],["2024-12-24",5770.85],["2024-12-25",5784.82],["2024-12-26",5831.11],["2024-12-27",5851.96],["2024-12-28",5851.96],["2024-12-30",5868.38],["2024-12-31",5868.38],["2025-01-02",5868.38],["2025-01-03",5918.35],["2025-01-06",6016.69],["2025-01-08",6009.85],["2025-01-09",6035.91],["2025-01-10",6026.5],["2025-01-13",6018.11],["2025-01-14",6030.99],["2025-01-15",6062.0],["2025-01-16",6093.72],["2025-01-17",6100.83],["2025-01-20",6089.4],["2025-01-21",6081.42],["2025-01-22",6076.38],["2025-01-23",6089.5],["2025-01-24",6099.5],["2025-01-27",6118.25],["2025-01-28",6143.9],["2025-01-29",6152.39],["2025-01-30",6206.52],["2025-01-31",6217.77],["2025-02-03",6252.83],["2025-02-04",6280.36],["2025-02-05",6304.87],["2025-02-06",6291.74],["2025-02-07",6264.55],["2025-02-10",6249.05],["2025-02-11",6261.78],["2025-02-12",6316.45],["2025-02-13",6325.45],["2025-02-14",6316.17],["2025-02-17",6322.21],["2025-02-18",6324.47],["2025-02-19",6312.55],["2025-02-20",6281.95],["2025-02-21",6256.04],["2025-02-24",6251.3],["2025-02-25",6269.02],["2025-02-26",6255.42],["2025-02-27",6258.54],["2025-02-28",6256.76],["2025-03-03",6267.25],["2025-03-04",6281.35],["2025-03-05",6301.75],["2025-03-06",6321.78],["2025-03-07",6341.48],["2025-03-10",6335.62],["2025-03-11",6325.12],["2025-03-12",6308.38],["2025-03-13",6271.01],["2025-03-14",6278.54],["2025-03-17",6304.17],["2025-03-18",6337.84],["2025-03-19",6370.4],["2025-03-20",6384.74],["2025-03-21",6400.87],["2025-03-24",6418.36],["2025-03-25",6417.58],["2025-03-26",6447.23],["2025-03-27",6467.99],["2025-03-28",6434.86],["2025-03-31",6450.3],["2025-04-01",6458.21],["2025-04-02",6465.04],["2025-04-03",6436.15],["2025-04-04",6410.48],["2025-04-07",6325.01],["2025-04-08",6358.69],["2025-04-09",6380.51],["2025-04-10",6256.33],["2025-04-11",6245.74],["2025-04-14",6270.79],["2025-04-15",6269.92],["2025-04-16",6304.11],["2025-04-17",6332.7],["2025-04-18",6315.91],["2025-04-21",6315.34],["2025-04-22",6305.54],["2025-04-23",6269.75],["2025-04-24",6241.79],["2025-04-25",6240.1],["2025-04-28",6228.77],["2025-04-29",6215.64],["2025-04-30",6226.23],["2025-05-01",6226.23],["2025-05-02",6226.23],["2025-05-05",6310.43],["2025-05-06",6352.22],["2025-05-07",6354.0],["2025-05-08",6349.48],["2025-05-09",6349.48],["2025-05-12",6342.98],["2025-05-13",6320.96],["2025-05-14",6289.58],["2025-05-15",6285.62],["2025-05-16",6291.22],["2025-05-19",6297.84],["2025-05-20",6280.16],["2025-05-21",6278.46],["2025-05-22",6321.44],["2025-05-23",6305.6],["2025-05-26",6317.01],["2025-05-27",6345.86],["2025-05-28",6380.91],["2025-05-29",6377.63],["2025-05-30",6379.73],["2025-06-02",6353.66],["2025-06-03",6376.75],["2025-06-04",6348.16],["2025-06-05",6332.56],["2025-06-06",6353.39],["2025-06-09",6371.35],["2025-06-10",6370.87],["2025-06-11",6392.11],["2025-06-13",6379.97],["2025-06-16",6446.81],["2025-06-17",6477.18],["2025-06-18",6506.03],["2025-06-19",6553.6],["2025-06-20",6565.55],["2025-06-23",6625.98],["2025-06-24",6657.88],["2025-06-25",6685.51],["2025-06-26",6671.6],["2025-06-27",6676.77],["2025-06-30",6673.39],["2025-07-01",6695.2],["2025-07-02",6748.85],["2025-07-03",6705.29],["2025-07-04",6704.14],["2025-07-07",6712.87],["2025-07-08",6759.36],["2025-07-09",6804.45],["2025-07-10",6783.05],["2025-07-11",6796.37],["2025-07-14",6822.98],["2025-07-15",6830.95],["2025-07-16",6860.06],["2025-07-17",6880.59],["2025-07-18",6825.63],["2025-07-21",6807.4],["2025-07-22",6826.08],["2025-07-23",6845.56],["2025-07-24",6849.13],["2025-07-25",6826.35],["2025-07-28",6778.51],["2025-07-29",6736.97],["2025-07-30",6730.23],["2025-07-31",6694.1],["2025-08-01",6676.11],["2025-08-04",6516.04],["2025-08-05",6539.96],["2025-08-06",6592.09],["2025-08-07",6617.6],["2025-08-08",6621.85],["2025-08-11",6622.24],["2025-08-12",6604.44],["2025-08-13",6599.27],["2025-08-14",6584.26],["2025-08-15",6575.54],["2025-08-18",6512.25],["2025-08-19",6498.68],["2025-08-20",6459.86],["2025-08-21",6461.06],["2025-08-22",6449.92],["2025-08-25",6412.15],["2025-08-26",6403.38],["2025-08-27",6395.68],["2025-08-28",6410.54],["2025-08-29",6380.77],["2025-09-01",6363.37],["2025-09-02",6307.94],["2025-09-03",6310.65],["2025-09-04",6307.51],["2025-09-05",6306.59],["2025-09-08",6291.98],["2025-09-09",6287.3],["2025-09-10",6274.8],["2025-09-11",6293.59],["2025-09-12",6280.45],["2025-09-15",6244.55],["2025-09-16",6244.75],["2025-09-17",6265.6],["2025-09-18",6275.06],["2025-09-19",6291.53],["2025-09-22",6273.45],["2025-09-23",6251.65],["2025-09-24",6244.32],["2025-09-25",6225.17],["2025-09-26",6201.89],["2025-09-29",6211.08],["2025-09-30",6198.66],["2025-10-01",6179.8],["2025-10-02",6183.89],["2025-10-03",6196.63],["2025-10-06",6196.82],["2025-10-07",6174.69],["2025-10-08",6173.72],["2025-10-09",6109.4],["2025-10-10",6135.57],["2025-10-13",6147.1],["2025-10-14",6137.9],["2025-10-15",6143.04],["2025-10-16",6159.86],["2025-10-17",6171.6],["2025-10-20",6188.22],["2025-10-21",6215.11],["2025-10-22",6209.31],["2025-10-23",6219.9],["2025-10-24",6239.11],["2025-10-27",6279.17],["2025-10-28",6298.69],["2025-10-29",6328.6],["2025-10-30",6332.47],["2025-10-31",6343.55],["2025-11-01",6343.55],["2025-11-05",6368.99],["2025-11-06",6411.97],["2025-11-07",6415.43],["2025-11-10",6435.76],["2025-11-11",6455.3],["2025-11-12",6461.8],["2025-11-13",6447.4],["2025-11-14",6420.32],["2025-11-17",6430.85],["2025-11-18",6393.05],["2025-11-19",6375.37],["2025-11-20",6365.09],["2025-11-21",6345.11],["2025-11-24",6369.54],["2025-11-25",6344.84],["2025-11-26",6298.89],["2025-11-27",6279.47],["2025-11-28",6240.1],["2025-12-01",6221.39],["2025-12-02",6158.13],["2025-12-03",6120.14],["2025-12-04",6087.63],["2025-12-05",6064.89],["2025-12-08",6028.68],["2025-12-09",6006.14],["2025-12-10",6026.69],["2025-12-11",6011.87],["2025-12-12",5993.83],["2025-12-15",5991.98],["2025-12-16",6014.84],["2025-12-17",6025.56],["2025-12-18",6029.04],["2025-12-19",6019.66],["2025-12-22",6038.26],["2025-12-23",6081.85],["2025-12-24",6124.82],["2025-12-25",6142.12],["2025-12-26",6161.04],["2025-12-29",6150.43],["2025-12-30",6138.17],["2025-12-31",6138.17],["2026-01-02",6138.17],["2026-01-05",6177.21],["2026-01-06",6187.47],["2026-01-07",6187.47],["2026-01-08",6177.36],["2026-01-09",6153.36],["2026-01-12",6112.36],["2026-01-13",6101.95],["2026-01-14",6152.65],["2026-01-15",6182.27],["2026-01-16",6193.57],["2026-01-19",6190.43],["2026-01-20",6213.18],["2026-01-21",6246.89],["2026-01-22",6260.84],["2026-01-23",6256.95],["2026-01-26",6240.5],["2026-01-27",6236.55],["2026-01-28",6231.01],["2026-01-29",6229.3],["2026-01-30",6220.52],["2026-02-02",6213.66],["2026-02-03",6229.65],["2026-02-04",6241.38],["2026-02-05",6243.53],["2026-02-06",6254.89],["2026-02-09",6275.58],["2026-02-10",6295.74],["2026-02-11",6318.1],["2026-02-12",6362.95],["2026-02-13",6343.26],["2026-02-16",6353.56],["2026-02-17",6368.89],["2026-02-18",6335.97],["2026-02-19",6319.46],["2026-02-20",6302.82],["2026-02-24",6245.48],["2026-02-25",6209.24],["2026-02-26",6189.79],["2026-02-27",6157.49],["2026-03-02",6124.54],["2026-03-03",6114.16],["2026-03-04",6143.92],["2026-03-05",6157.35],["2026-03-06",6187.29],["2026-03-09",6195.45],["2026-03-10",6174.65],["2026-03-11",6153.46],["2026-03-12",6154.48],["2026-03-13",6166.38],["2026-03-16",6164.39],["2026-03-17",6155.17],["2026-03-18",6142.33],["2026-03-19",6122.88],["2026-03-20",6095.55],["2026-03-23",6067.82],["2026-03-24",6073.05],["2026-03-25",6070.74],["2026-03-26",6076.77],["2026-03-27",6088.13],["2026-03-30",6098.47],["2026-03-31",6106.84],["2026-04-01",6156.39],["2026-04-02",6124.85],["2026-04-03",6097.8],["2026-04-06",6083.23],["2026-04-07",6094.99],["2026-04-08",6176.37],["2026-04-09",6193.83],["2026-04-10",6230.42],["2026-04-13",6232.99],["2026-04-14",6224.44],["2026-04-15",6248.67],["2026-04-16",6250.11],["2026-04-17",6252.53],["2026-04-20",6264.72],["2026-04-21",6250.86],["2026-04-22",6243.9],["2026-04-23",6245.68],["2026-04-24",6255.11],["2026-04-27",6265.36],["2026-04-28",6321.22],["2026-04-29",6347.07],["2026-04-30",6347.07],["2026-05-01",6347.07],["2026-05-04",6323.22],["2026-05-05",6341.47],["2026-05-06",6349.92],["2026-05-07",6329.5],["2026-05-08",6329.5],["2026-05-11",6347.27],["2026-05-12",6341.21],["2026-05-13",6351.88],["2026-05-14",6373.96],["2026-05-15",6414.16],["2026-05-18",6438.16],["2026-05-19",6471.27],["2026-05-20",6480.74],["2026-05-21",6477.37],["2026-05-22",6488.43],["2026-05-25",6514.21],["2026-05-26",6522.28],["2026-05-27",6513.46],["2026-05-28",6523.49],["2026-05-29",6531.59],["2026-06-01",6566.16],["2026-06-02",6567.53],["2026-06-03",6566.5],["2026-06-04",6582.99],["2026-06-05",6594.42],["2026-06-08",6605.05],["2026-06-09",6590.2],["2026-06-10",6554.8],["2026-06-11",6530.4],["2026-06-12",6530.4],["2026-06-15",6518.53],["2026-06-16",6480.08],["2026-06-17",6446.36],["2026-06-18",6421.9],["2026-06-19",6429.95],["2026-06-22",6415.42],["2026-06-23",6391.62],["2026-06-24",6370.42],["2026-06-25",6354.0],["2026-06-26",6333.71],["2026-06-29",6321.84],["2026-06-30",6322.27],["2026-07-01",6332.36],["2026-07-02",6317.99],["2026-07-03",6297.63],["2026-07-06",6278.62],["2026-07-07",6291.77],["2026-07-08",6277.42],["2026-07-09",6266.64],["2026-07-10",6267.66],["2026-07-13",6259.55],["2026-07-14",6237.42],["2026-07-15",6256.73],["2026-07-16",6262.06],["2026-07-17",6262.37],["2026-07-20",6227.09],["2026-07-21",6208.79],["2026-07-22",6197.7],["2026-07-23",6175.56],["2026-07-24",6172.49]];
+
+// ============================================================
+// UTILITIES
+// ============================================================
+
+function parseDate(s) {
+  const p = s.split('-');
+  return new Date(+p[0], +p[1] - 1, +p[2]);
+}
+
+function fmtDate(s) {
+  const p = s.split('-');
+  return `${p[2]}.${p[1]}.${p[0]}`;
+}
+
+function fmtRub(n) {
+  if (n == null || isNaN(n)) return '—';
+  if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + ' млн ₽';
+  if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(0) + ' тыс ₽';
+  return n.toFixed(2) + ' ₽';
+}
+
+function fmtPct(n) {
+  if (n == null || isNaN(n)) return '—';
+  return (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+}
+
+// Get key rate for a given date string YYYY-MM-DD
+function getKeyRate(dateStr) {
+  // Binary search for latest rate <= dateStr
+  let lo = 0, hi = KEY_RATES.length - 1;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (KEY_RATES[mid][0] <= dateStr) lo = mid;
+    else hi = mid - 1;
+  }
+  return KEY_RATES[lo][1];
+}
+
+// Get IRUS close for a given date, or nearest earlier date
+const _irusMap = new Map(IRUS_DATA);
+function getIRUS(dateStr) {
+  if (_irusMap.has(dateStr)) return _irusMap.get(dateStr);
+  // Find nearest earlier
+  for (let i = IRUS_DATA.length - 1; i >= 0; i--) {
+    if (IRUS_DATA[i][0] <= dateStr) return IRUS_DATA[i][1];
+  }
+  return IRUS_DATA[0][1];
+}
+
+// Generate list of all dates in range
+function* dateRange(start, end) {
+  const d = parseDate(start);
+  const e = parseDate(end);
+  while (d <= e) {
+    const iso = d.toISOString().slice(0, 10);
+    yield iso;
+    d.setDate(d.getDate() + 1);
+  }
+}
+
+// ============================================================
+// PORTFOLIO SIMULATION ENGINE
+// ============================================================
+
+function simulate(initialCapital, maxPositions) {
+  // Sort trades by date_buy, then by ticker (for determinism on same day)
+  const sorted = [...TRADES].sort((a, b) => {
+    if (a.date_buy !== b.date_buy) return a.date_buy.localeCompare(b.date_buy);
+    return a.ticker.localeCompare(b.ticker);
+  });
+
+  const FIRST_DATE = '2023-08-25';
+  const today = new Date().toISOString().slice(0, 10);
+  const LAST_DATE = today > '2026-07-24' ? '2026-07-24' : today;
+
+  let cash = initialCapital;
+  const positions = [];  // {ticker, entry_date, entry_price, shares}
+  const navHistory = [];
+  const tradeLog = [];
+  let tradeIdx = 0;
+
+  // Pre-build daily event map
+  const sellsByDate = new Map();  // date -> [{ticker, entry_date, entry_price, shares, sell_price, sell_date}]
+  for (const t of sorted) {
+    if (!sellsByDate.has(t.date_sell)) sellsByDate.set(t.date_sell, []);
+    sellsByDate.get(t.date_sell).push(t);
+  }
+
+  // Pre-sort buys by date
+  const buysByDate = new Map();
+  for (let i = 0; i < sorted.length; i++) {
+    const t = sorted[i];
+    if (!buysByDate.has(t.date_buy)) buysByDate.set(t.date_buy, []);
+    buysByDate.get(t.date_buy).push({...t, idx: i});
+  }
+
+  for (const date of dateRange(FIRST_DATE, LAST_DATE)) {
+    // 1. Process sells on this date
+    const sells = sellsByDate.get(date) || [];
+    for (const t of sells) {
+      // Find the matching open position
+      const posIdx = positions.findIndex(p => p.ticker === t.ticker && p.entry_date <= date && !p.closed);
+      if (posIdx >= 0) {
+        const pos = positions[posIdx];
+        const proceeds = pos.shares * t.price_sell;
+        cash += proceeds;
+        pos.closed = true;
+        pos.exit_date = t.date_sell;
+        pos.exit_price = t.price_sell;
+        pos.pnl = proceeds - pos.shares * pos.entry_price;
+        // Log the trade
+        tradeLog.push({
+          ticker: t.ticker,
+          entry_date: pos.entry_date,
+          entry_price: pos.entry_price,
+          exit_date: date,
+          exit_price: t.price_sell,
+          shares: pos.shares,
+          cost: pos.shares * pos.entry_price,
+          proceeds: proceeds,
+          pnl: pos.pnl,
+          skipped: false
+        });
+      }
+    }
+
+    // 2. Remove closed positions (free slots)
+    for (let i = positions.length - 1; i >= 0; i--) {
+      if (positions[i].closed) positions.splice(i, 1);
+    }
+
+    // 3. Process buys on this date
+    const buys = buysByDate.get(date) || [];
+    for (const t of buys) {
+      if (positions.length >= maxPositions) {
+        // Skip this signal
+        tradeLog.push({
+          ticker: t.ticker,
+          entry_date: date,
+          entry_price: t.price_buy,
+          skipped: true
+        });
+        continue;
+      }
+      // Total NAV = cash + value of open positions (at entry price)
+      const openValue = positions.reduce((sum, p) => sum + p.shares * p.entry_price, 0);
+      const totalNAV = cash + openValue;
+      const slotCapital = totalNAV / maxPositions;
+      const shares = slotCapital / t.price_buy;
+      cash -= slotCapital;
+      positions.push({
+        ticker: t.ticker,
+        entry_date: date,
+        entry_price: t.price_buy,
+        shares: shares,
+        closed: false
+      });
+    }
+
+    // 4. Accrue cash at daily key rate
+    const annualRate = getKeyRate(date) / 100;
+    const dailyRate = Math.pow(1 + annualRate, 1 / 365) - 1;
+    cash *= (1 + dailyRate);
+
+    // 5. Compute NAV
+    const openValue = positions.reduce((sum, p) => sum + p.shares * p.entry_price, 0);
+    const nav = cash + openValue;
+
+    navHistory.push({ date, nav, cash });
+  }
+
+  const finalNAV = navHistory[navHistory.length - 1].nav;
+  const totalReturn = ((finalNAV - initialCapital) / initialCapital) * 100;
+
+  return { navHistory, tradeLog, finalNAV, totalReturn };
+}
+
+// ============================================================
+// BENCHMARK LINES (IRUS & LQDT)
+// ============================================================
+
+function irusBenchmark(initialCapital) {
+  const FIRST_DATE = '2023-08-25';
+  const today = new Date().toISOString().slice(0, 10);
+  const LAST_DATE = today > '2026-07-24' ? '2026-07-24' : today;
+  const baseClose = getIRUS(FIRST_DATE);
+
+  // Build a map of known IRUS closes, then fill every date by linear interpolation
+  const known = new Map(IRUS_DATA);
+  const dates = [...dateRange(FIRST_DATE, LAST_DATE)];
+  const points = [];
+
+  // For each date, find bracketing known IRUS points and interpolate
+  let prevDate = null, prevClose = null;
+  let nextDate = null, nextClose = null;
+  let irusIdx = 0;
+
+  for (const date of dates) {
+    // Advance irusIdx to bracket this date
+    while (irusIdx < IRUS_DATA.length && IRUS_DATA[irusIdx][0] <= date) {
+      prevDate = IRUS_DATA[irusIdx][0];
+      prevClose = IRUS_DATA[irusIdx][1];
+      irusIdx++;
+    }
+    nextDate = irusIdx < IRUS_DATA.length ? IRUS_DATA[irusIdx][0] : null;
+    nextClose = irusIdx < IRUS_DATA.length ? IRUS_DATA[irusIdx][1] : null;
+
+    let close;
+    if (known.has(date)) {
+      close = known.get(date);
+    } else if (prevDate && nextDate) {
+      // Linear interpolation
+      const d0 = parseDate(prevDate).getTime();
+      const d1 = parseDate(nextDate).getTime();
+      const d = parseDate(date).getTime();
+      const t = (d - d0) / (d1 - d0);
+      close = prevClose + t * (nextClose - prevClose);
+    } else if (prevDate) {
+      close = prevClose;
+    } else {
+      close = nextClose;
+    }
+
+    points.push({ date, nav: initialCapital * (close / baseClose) });
+  }
+
+  return points;
+}
+
+function lqdtBenchmark(initialCapital) {
+  const FIRST_DATE = '2023-08-25';
+  const today = new Date().toISOString().slice(0, 10);
+  const LAST_DATE = today > '2026-07-24' ? '2026-07-24' : today;
+  const points = [];
+  let cash = initialCapital;
+  for (const date of dateRange(FIRST_DATE, LAST_DATE)) {
+    const annualRate = getKeyRate(date) / 100;
+    const dailyRate = Math.pow(1 + annualRate, 1 / 365) - 1;
+    cash *= (1 + dailyRate);
+    points.push({ date, nav: cash });
+  }
+  return points;
+}
+
+// ============================================================
+// CHART
+// ============================================================
+
+let mainChart = null;
+
+const IRUS_COLOR = '#000000';
+const LQDT_COLOR = '#ff0000';
+
+function buildChart(initialCapital, currentN) {
+  const canvas = document.getElementById('mainChart');
+  const ctx = canvas.getContext('2d');
+  // Destroy any existing chart on this canvas (including from failed previous attempt)
+  const existing = Chart.getChart(canvas);
+  if (existing) existing.destroy();
+  if (mainChart) mainChart.destroy();
+  mainChart = null;
+
+  const datasets = [];
+
+  // Current N portfolio line
+  const sim = simulate(initialCapital, currentN);
+  const portData = sim.navHistory.filter((_, i) => i % 7 === 0 || i === sim.navHistory.length - 1);
+  datasets.push({
+    label: `Портфель (N=${currentN})`,
+    data: portData.map(p => ({ x: parseDate(p.date).getTime(), y: p.nav })),
+    borderColor: '#4a90d9',
+    backgroundColor: 'rgba(74,144,217,0.1)',
+    borderWidth: 3,
+    pointRadius: 0,
+    tension: 0.1
+  });
+
+  // IRUS benchmark
+  const irus = irusBenchmark(initialCapital);
+  const irusSampled = irus.filter((_, i) => i % 7 === 0 || i === irus.length - 1);
+  datasets.push({
+    label: 'IRUS (MCFTR)',
+    data: irusSampled.map(p => ({ x: parseDate(p.date).getTime(), y: p.nav })),
+    borderColor: IRUS_COLOR,
+    borderWidth: 2.5,
+    borderDash: [8, 3],
+    pointRadius: 0,
+    tension: 0.1
+  });
+
+  // LQDT benchmark
+  const lqdt = lqdtBenchmark(initialCapital);
+  const lqdtSampled = lqdt.filter((_, i) => i % 7 === 0 || i === lqdt.length - 1);
+  datasets.push({
+    label: 'LQDT (ставка ЦБ)',
+    data: lqdtSampled.map(p => ({ x: parseDate(p.date).getTime(), y: p.nav })),
+    borderColor: LQDT_COLOR,
+    borderWidth: 2.5,
+    borderDash: [3, 3],
+    pointRadius: 0,
+    tension: 0.1
+  });
+
+  mainChart = new Chart(ctx, {
+    type: 'line',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${fmtRub(ctx.parsed.y)}`
+          }
+        },
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 20,
+            font: { size: 11 },
+            padding: 8
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'month', displayFormats: { month: 'MMM yyyy' } },
+          title: { display: false },
+          min: parseDate('2023-08-25').getTime()
+        },
+        y: {
+          title: { display: true, text: 'Капитал, ₽' },
+          ticks: {
+            callback: v => fmtRub(v)
+          }
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// STATS & UI
+// ============================================================
+
+function showStats(sim, initialCapital) {
+  const trades = sim.tradeLog.filter(t => !t.skipped);
+  const skipped = sim.tradeLog.filter(t => t.skipped);
+  const wins = trades.filter(t => t.pnl > 0);
+  const losses = trades.filter(t => t.pnl <= 0);
+
+  const totalPnL = trades.reduce((s, t) => s + t.pnl, 0);
+  const avgReturn = trades.length > 0
+    ? trades.reduce((s, t) => s + (t.pnl / t.cost * 100), 0) / trades.length
+    : 0;
+
+  // Annualized return (CAGR)
+  const firstDate = parseDate(sim.navHistory[0].date);
+  const lastDate = parseDate(sim.navHistory[sim.navHistory.length - 1].date);
+  const years = (lastDate - firstDate) / (365.25 * 24 * 60 * 60 * 1000);
+  const cagr = years > 0 ? (Math.pow(sim.finalNAV / initialCapital, 1 / years) - 1) * 100 : 0;
+
+  const dateFrom = sim.navHistory[0].date;
+  const dateTo = sim.navHistory[sim.navHistory.length - 1].date;
+
+  document.getElementById('stats').innerHTML = `
+    <div class="date-range-bar">
+      📅 Дата начала: <span>${fmtDate(dateFrom)}</span>
+      &nbsp;→&nbsp; Дата завершения: <span>${fmtDate(dateTo)}</span>
+    </div>
+    <div class="stat-card">
+      <div class="label">Финальный капитал</div>
+      <div class="value ${sim.finalNAV >= initialCapital ? 'positive' : 'negative'}">${fmtRub(sim.finalNAV)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Общая доходность</div>
+      <div class="value ${sim.totalReturn >= 0 ? 'positive' : 'negative'}">${fmtPct(sim.totalReturn)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Годовая доходность (CAGR)</div>
+      <div class="value ${cagr >= 0 ? 'positive' : 'negative'}">${fmtPct(cagr)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Совершено сделок</div>
+      <div class="value">${trades.length} / ${sim.tradeLog.length}</div>
+      <div class="trade-pnl">пропущено: ${skipped.length}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Прибыльных / убыточных</div>
+      <div class="value">${wins.length} / ${losses.length}</div>
+      <div class="trade-pnl">win rate: ${trades.length > 0 ? (wins.length/trades.length*100).toFixed(0) : 0}%</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Средняя доходность на сделку</div>
+      <div class="value ${avgReturn >= 0 ? 'positive' : 'negative'}">${fmtPct(avgReturn)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Суммарный P&L</div>
+      <div class="value ${totalPnL >= 0 ? 'positive' : 'negative'}">${fmtRub(totalPnL)}</div>
+    </div>
+  `;
+}
+
+function showTradeTable(sim) {
+  const allTrades = sim.tradeLog;
+  let html = `<table>
+    <thead><tr>
+      <th>#</th><th>Ticker</th><th class="sep-left-header">Дата входа</th><th>Цена входа</th>
+      <th class="sep-left-header">Дата выхода</th><th>Цена выхода</th><th class="sep-left-header">Кол-во</th>
+      <th>Затраты</th><th>Выручка</th><th>P&L</th><th>Доходность</th>
+    </tr></thead><tbody>`;
+
+  for (let i = 0; i < allTrades.length; i++) {
+    const t = allTrades[i];
+    if (t.skipped) {
+      html += `<tr class="skipped">
+        <td>${i + 1}</td><td>${t.ticker}</td><td>${fmtDate(t.entry_date)}</td>
+        <td>${t.entry_price.toFixed(2)}</td>
+        <td colspan="7" style="color:#c00">⏭ Пропущен (все ${document.getElementById('maxPositions').value} слотов заняты)</td>
+      </tr>`;
+    } else {
+      const ret = (t.pnl / t.cost * 100);
+      html += `<tr>
+        <td>${i + 1}</td><td><b>${t.ticker}</b></td>
+        <td class="sep-left">${fmtDate(t.entry_date)}</td><td>${t.entry_price.toFixed(2)}</td>
+        <td class="sep-left">${fmtDate(t.exit_date)}</td><td>${t.exit_price.toFixed(2)}</td>
+        <td class="sep-left">${t.shares.toFixed(0)}</td>
+        <td>${fmtRub(t.cost)}</td><td>${fmtRub(t.proceeds)}</td>
+        <td class="${t.pnl >= 0 ? 'return-positive' : 'return-negative'}">${fmtRub(t.pnl)}</td>
+        <td class="${ret >= 0 ? 'return-positive' : 'return-negative'}">${fmtPct(ret)}</td>
+      </tr>`;
+    }
+  }
+  html += '</tbody></table>';
+  document.getElementById('tradeTable').innerHTML = html;
+}
+
+// ============================================================
+// MAIN RECALC
+// ============================================================
+
+let sweepResults = null;
+
+function recalc() {
+  const initialCapital = parseFloat(document.getElementById('initialCapital').value) || 1000000;
+  const maxPositions = parseInt(document.getElementById('maxPositions').value) || 5;
+  const sim = simulate(initialCapital, maxPositions);
+
+  showStats(sim, initialCapital);
+  showTradeTable(sim);
+  buildChart(initialCapital, maxPositions);
+
+  // Store for sweep summary
+  window._lastSim = sim;
+  window._lastCapital = initialCapital;
+  window._lastN = maxPositions;
+}
+
+// ============================================================
+// SWEEP: N=1..14
+// ============================================================
+
+async function runSweep() {
+  const btn = document.getElementById('btnSweep');
+  const clearBtn = document.getElementById('btnClear');
+  const loading = document.getElementById('loading');
+  const initialCapital = parseFloat(document.getElementById('initialCapital').value) || 1000000;
+
+  btn.disabled = true;
+  loading.classList.add('visible');
+
+  // Run in chunks to keep UI responsive
+  sweepResults = [];
+  for (let n = 1; n <= 14; n++) {
+    await new Promise(resolve => {
+      setTimeout(() => {
+        const sim = simulate(initialCapital, n);
+        sweepResults.push({
+          n,
+          navHistory: sim.navHistory,
+          finalNAV: sim.finalNAV,
+          totalReturn: sim.totalReturn,
+          tradesMade: sim.tradeLog.filter(t => !t.skipped).length,
+          tradesSkipped: sim.tradeLog.filter(t => t.skipped).length
+        });
+        resolve();
+      }, 0);
+    });
+  }
+
+  loading.classList.remove('visible');
+  btn.disabled = false;
+  clearBtn.style.display = 'inline-block';
+
+  showSweepSummary(sweepResults, initialCapital, parseInt(document.getElementById('maxPositions').value) || 5);
+  recalc(); // will rebuild chart with sweep lines
+}
+
+let sweepChart = null;
+
+function buildSweepChart(results, currentN) {
+  const container = document.getElementById('sweepChartContainer');
+  const canvas = document.getElementById('sweepChart');
+  container.style.display = 'block';
+
+  const existing = Chart.getChart(canvas);
+  if (existing) existing.destroy();
+  if (sweepChart) sweepChart.destroy();
+  sweepChart = null;
+
+  const labels = results.map(r => r.n);
+  const data = results.map(r => r.totalReturn);
+  const bgColors = results.map(r => r.n === currentN ? '#4a90d9' : (r.totalReturn >= 0 ? '#2ca02c' : '#d62728'));
+
+  sweepChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Доходность, %',
+        data,
+        backgroundColor: bgColors,
+        borderColor: bgColors.map(c => c === '#4a90d9' ? '#3a7bc8' : c),
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: ctx => `Доходность: ${fmtPct(ctx.parsed.y)}`
+          }
+        },
+        legend: { display: false }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'N (макс. позиций)' },
+          ticks: { stepSize: 1 }
+        },
+        y: {
+          title: { display: true, text: 'Доходность, %' },
+          ticks: {
+            callback: v => fmtPct(v)
+          }
+        }
+      }
+    }
+  });
+}
+
+function clearSweep() {
+  sweepResults = null;
+  _sweepData = null;
+  _sweepSort = {col: null, asc: true};
+  document.getElementById('btnClear').style.display = 'none';
+  document.getElementById('sweepSummary').innerHTML = '';
+  document.getElementById('sweepChartContainer').style.display = 'none';
+  if (sweepChart) { sweepChart.destroy(); sweepChart = null; }
+  recalc();
+}
+
+let _sweepData = null;
+let _sweepSort = {col: null, asc: true};
+
+function sortSweepTable(col) {
+  if (_sweepSort.col === col) {
+    _sweepSort.asc = !_sweepSort.asc;
+  } else {
+    _sweepSort.col = col;
+    _sweepSort.asc = true;
+  }
+  renderSweepSummary();
+}
+
+function renderSweepSummary() {
+  if (!_sweepData) return;
+  const {results, initialCapital, currentN} = _sweepData;
+  const best = results.reduce((a, b) => a.totalReturn > b.totalReturn ? a : b);
+  const worst = results.reduce((a, b) => a.totalReturn < b.totalReturn ? a : b);
+
+  buildSweepChart(results, currentN);
+
+  // Sort
+  const sorted = [...results];
+  const {col, asc} = _sweepSort;
+  if (col) {
+    const keyMap = {n: 'n', capital: 'finalNAV', return: 'totalReturn', trades: 'tradesMade', skipped: 'tradesSkipped'};
+    const key = keyMap[col];
+    sorted.sort((a, b) => {
+      const va = a[key], vb = b[key];
+      return asc ? va - vb : vb - va;
+    });
+  }
+
+  const arrow = (c) => {
+    if (_sweepSort.col !== c) return '<span class="sort-arrow">▾</span>';
+    return `<span class="sort-arrow active">${_sweepSort.asc ? '▴' : '▾'}</span>`;
+  };
+
+  let html = `<div class="section-title">📊 Сводка по всем N (1..14)</div>
+    <table>
+    <thead><tr>
+      <th class="sort-header${_sweepSort.col==='n'?' '+(asc?'asc':'desc'):''}" onclick="sortSweepTable('n')">N ${arrow('n')}</th>
+      <th class="sort-header${_sweepSort.col==='capital'?' '+(asc?'asc':'desc'):''}" onclick="sortSweepTable('capital')">Финальный капитал ${arrow('capital')}</th>
+      <th class="sort-header${_sweepSort.col==='return'?' '+(asc?'asc':'desc'):''}" onclick="sortSweepTable('return')">Доходность ${arrow('return')}</th>
+      <th class="sort-header${_sweepSort.col==='trades'?' '+(asc?'asc':'desc'):''}" onclick="sortSweepTable('trades')">Сделок ${arrow('trades')}</th>
+      <th class="sort-header${_sweepSort.col==='skipped'?' '+(asc?'asc':'desc'):''}" onclick="sortSweepTable('skipped')">Пропущено ${arrow('skipped')}</th>
+    </tr></thead><tbody>`;
+
+  for (const r of sorted) {
+    const cls = r.n === best.n ? 'best-row' : '';
+    html += `<tr class="${cls}">
+      <td><b>${r.n}</b></td>
+      <td class="${r.totalReturn >= 0 ? 'return-positive' : 'return-negative'}">${fmtRub(r.finalNAV)}</td>
+      <td class="${r.totalReturn >= 0 ? 'return-positive' : 'return-negative'}">${fmtPct(r.totalReturn)}</td>
+      <td>${r.tradesMade}</td>
+      <td>${r.tradesSkipped}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  html += `<p style="margin-top:8px;font-size:13px">
+    🏆 Лучший результат: <b>N=${best.n}</b> — ${fmtRub(best.finalNAV)} (${fmtPct(best.totalReturn)})<br>
+    📉 Худший результат: <b>N=${worst.n}</b> — ${fmtRub(worst.finalNAV)} (${fmtPct(worst.totalReturn)})<br>
+    💰 IRUS (MCFTR): ${fmtRub(initialCapital * getIRUS('2026-07-24') / getIRUS('2023-08-25'))}<br>
+    💵 LQDT (ставка ЦБ): ${fmtRub(lqdtBenchmark(initialCapital).pop().nav)}
+  </p>`;
+  document.getElementById('sweepSummary').innerHTML = html;
+}
+
+function showSweepSummary(results, initialCapital, currentN) {
+  _sweepData = {results, initialCapital, currentN};
+  _sweepSort = {col: null, asc: true};
+  renderSweepSummary();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+recalc();
+</script>
+</body>
+</html>
