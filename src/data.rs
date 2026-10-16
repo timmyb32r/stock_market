@@ -331,6 +331,13 @@ impl Moex {
             }
             anyhow::ensure!(offset < 30000, "Слишком большой каталог ISS");
         }
+        let mozgovik: Value = serde_json::from_str(crate::mozgovik::SOURCE_JSON)?;
+        for signal in mozgovik["trades"].as_array().unwrap() {
+            let ticker = signal["ticker"].as_str().unwrap();
+            tickers
+                .entry(ticker.to_owned())
+                .or_insert_with(|| ticker.to_owned());
+        }
         let total = tickers.len();
         let base = data.clone();
         let jobs = tickers.into_iter().map(|(ticker, name)| {
@@ -343,7 +350,8 @@ impl Moex {
                             && string(r, "registryclosedate").is_some_and(|d| d >= "2013-01-01")
                     })
                 });
-                let instrument = if has_events {
+                let required = mozgovik_ticker(&ticker);
+                let instrument = if has_events || required {
                     Some(
                         self.instrument(
                             &ticker,
@@ -686,4 +694,13 @@ mod tests {
         let restored: Vec<f64> = serde_json::from_str(&saved).unwrap();
         assert_eq!(amounts, restored);
     }
+}
+
+fn mozgovik_ticker(ticker: &str) -> bool {
+    let source: Value = serde_json::from_str(crate::mozgovik::SOURCE_JSON).unwrap();
+    source["trades"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|s| s["ticker"].as_str() == Some(ticker))
 }
